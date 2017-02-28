@@ -314,6 +314,15 @@ you should place your code here."
   (setq grep-program "c:\\Users\\nicol\\Desktop\\emacs\\bin\\grep.exe")
   (setq find-program "c:\\Users\\nicol\\Desktop\\emacs\\bin\\find.exe")
   ;; (setq grep-find-command "c:\\Users\\nicol\\Desktop\\emacs\\bin\\find.exe")
+
+  ;; bind evil-forward/backward-args
+  (define-key evil-normal-state-map "L" 'evil-forward-arg)
+  (define-key evil-normal-state-map "H" 'evil-backward-arg)
+  (define-key evil-motion-state-map "L" 'evil-forward-arg)
+  (define-key evil-motion-state-map "H" 'evil-backward-arg)
+
+  ;; bind evil-jump-out-args
+  (define-key evil-normal-state-map "K" 'evil-jump-out-args)
   )
 
 ;; Do not write anything past this comment. This is where Emacs will
