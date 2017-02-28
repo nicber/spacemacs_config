@@ -33,7 +33,9 @@ values."
    '(
      python
      c-c++
-     (auto-completion :variables auto-completion-complete-with-key-sequence "jk")
+     (auto-completion :variables auto-completion-complete-with-key-sequence "jk"
+                      auto-completion-enable-help-tooltip t
+                      auto-completion-enable-sort-by-usage t)
      syntax-checking
      ycmd
      semantic
