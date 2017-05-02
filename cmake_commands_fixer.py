@@ -32,17 +32,19 @@ def load_cmakecache(build_dir):
         exit(1)
 
 
-def replace_include_flags(compile_command):
-    compile_command = re.sub(r'-I\s*/usr', r'-I=/usr', compile_command)
-    compile_command = re.sub(r'-isystem\s*/usr', r'-isystem=/usr',
+def replace_include_flags(compile_command, sysroot):
+    compile_command = re.sub(r'-I\s*/', r'-I{}/'.format(sysroot),
                              compile_command)
+    compile_command = re.sub(
+        r'-isystem\s*/', r'-isystem{}/'.format(sysroot), compile_command)
     return compile_command
 
 
 def fix_compile_commands(compile_commands_content, sysroot):
     for trans_unit in compile_commands_content:
-        trans_unit['command'] = "{} --sysroot {}".format(
-            replace_include_flags(trans_unit['command']), sysroot)
+        # trans_unit['command'] = "{} --sysroot {}".format(
+            # replace_include_flags(trans_unit['command'], sysroot), sysroot)
+        trans_unit['command'] = replace_include_flags(trans_unit['command'], sysroot)
 
 
 def find_source_dir(cmakecache_content):
