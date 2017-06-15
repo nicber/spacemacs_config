@@ -33,10 +33,14 @@ def load_cmakecache(build_dir):
 
 
 def replace_include_flags(compile_command, sysroot):
-    compile_command = re.sub(r'-I\s*/', r'-I{}/'.format(sysroot),
+    compile_command = re.sub(r'-I\s*/usr', r'-I{}/usr'.format(sysroot),
                              compile_command)
     compile_command = re.sub(
-        r'-isystem\s*/', r'-isystem{}/'.format(sysroot), compile_command)
+        r'-isystem\s*/usr', r'-isystem{}/usr'.format(sysroot), compile_command)
+    compile_command = re.sub(r'-I\s*/home/dss/build', r'-I{}/home/dss/build'.format(sysroot),
+                             compile_command)
+    compile_command = re.sub(
+        r'-isystem\s*/home/dss/build', r'-isystem{}/home/dss/build'.format(sysroot), compile_command)
     return compile_command
 
 

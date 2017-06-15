@@ -71,9 +71,9 @@
 
 (defun rtags/init-cmake-ide ()
   "Initialize cmake-ide"
-  (use-package cmake-ide
-    :config (progn
-              (cmake-ide-setup))))
+  (use-package cmake-ide))
+    ;; :config (progn
+    ;;           (cmake-ide-setup))))
 
 (defun rtags/init-ac-rtags ()
   (use-package ac-rtags))
