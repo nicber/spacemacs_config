@@ -41,11 +41,9 @@ values."
      python
      (c-c++ :variables c-c++-default-mode-for-headers 'c++-mode)
      (auto-completion :variables auto-completion-complete-with-key-sequence "jk"
-                      auto-completion-enable-snippets-in-popup t
                       auto-completion-enable-help-tooltip t)
      syntax-checking
      ycmd
-     semantic
      (colors :variables colors-colorize-identifiers 'variables)
      ;; ----------------------------------------------------------------
      ;; Example of useful layers you may want to use right away.
@@ -74,7 +72,7 @@ values."
    ;; A list of packages that cannot be updated.
    dotspacemacs-frozen-packages '()
    ;; A list of packages that will not be installed and loaded.
-   dotspacemacs-excluded-packages '()
+   dotspacemacs-excluded-packages '(flycheck-ycmd)
    ;; Defines the behaviour of Spacemacs when installing packages.
    ;; Possible values are `used-only', `used-but-keep-unused' and `all'.
    ;; `used-only' installs only explicitly used packages and uninstall any
@@ -142,14 +140,14 @@ values."
    ;; List of themes, the first of the list is loaded when spacemacs starts.
    ;; Press <SPC> T n to cycle to the next theme in the list (works great
    ;; with 2 themes variants, one dark and one light)
-   dotspacemacs-themes '(base16-eighties
-                         spacemacs-dark
+   dotspacemacs-themes '(spacemacs-dark
+                         base16-eighties
                          spacemacs-light)
    ;; If non nil the cursor color matches the state color in GUI Emacs.
    dotspacemacs-colorize-cursor-according-to-state t
    ;; Default font, or prioritized list of fonts. `powerline-scale' allows to
    ;; quickly tweak the mode-line size to make separators look not too crappy.
-   dotspacemacs-default-font '("Space Mono"
+   dotspacemacs-default-font '("Source Code Pro"
                                :size 11
                                :weight normal
                                :width normal
@@ -176,7 +174,7 @@ values."
    ;; and TAB or <C-m> and RET.
    ;; In the terminal, these pairs are generally indistinguishable, so this only
    ;; works in the GUI. (default nil)
-   dotspacemacs-distinguish-gui-tab nil
+   dotspacemacs-distinguish-gui-tab t
    ;; If non nil `Y' is remapped to `y$' in Evil states. (default nil)
    dotspacemacs-remap-Y-to-y$ nil
    ;; If non-nil, the shift mappings `<' and `>' retain visual state if used
@@ -313,6 +311,8 @@ before packages are loaded. If you are unsure, you should try in setting them in
     (setq ycmd-startup-timeout 10)
     (setq ycmd-global-config (file-truename "~/dev/SMM/.ycm_extra_conf.py"))
     )
+  (custom-set-variables
+   '(helm-ag-base-command "rg --no-heading"))
   )
 
 (defun my-save-if-bufferfilename ()
@@ -321,6 +321,30 @@ before packages are loaded. If you are unsure, you should try in setting them in
         (save-buffer))
     (message "no file is associated to this buffer: do nothing")))
 
+(defun my-flycheck-rtags-setup ()
+  (flycheck-select-checker 'rtags)
+  (setq-local flycheck-highlighting-mode nil) ;; RTags creates more accurate overlays.
+  (setq-local flycheck-check-syntax-automatically nil)
+  )
+
+(defun rtags-major-mode-keybindings (mode)
+  (spacemacs/set-leader-keys-for-major-mode
+    mode "R." 'rtags-find-symbol-at-point "R,"
+    'rtags-find-references-at-point "Rv" 'rtags-find-virtuals-at-point
+    "RV" 'rtags-print-enum-value-at-point "R/"
+    'rtags-find-all-references-at-point "RY" 'rtags-cycle-overlays-on-screen
+    "R>" 'rtags-find-symbol "R<" 'rtags-find-references
+    "R[" 'rtags-location-stack-back "R]" 'rtags-location-stack-forward
+    "RD" 'rtags-diagnostics "RG" 'rtags-guess-function-at-point
+    "Rp" 'rtags-set-current-project "RP" 'rtags-print-dependencies
+    "Re" 'rtags-reparse-file "RE" 'rtags-preprocess-file
+    "RR" 'rtags-rename-symbol "RM" 'rtags-symbol-info
+    "RS" 'rtags-display-summary "RO" 'rtags-goto-offset
+    "R;" 'rtags-find-file "RF" 'rtags-fixit "RL"
+    'rtags-copy-and-print-current-location "RX"
+    'rtags-fix-fixit-at-point "RB" 'rtags-show-rtags-buffer
+    "RI" 'rtags-imenu "RT" 'rtags-taglist "Rh"
+    'rtags-print-class-hierarchy "Ra" 'rtags-print-source-arguments))
 
 (defun dotspacemacs/user-config ()
   "Configuration function for user code.
@@ -346,17 +370,31 @@ you should place your code here."
   (keyboard-translate ?\C-h ?\C-?)
   (keyboard-translate ?\C-n ?\C-h)
 
-  (global-hungry-delete-mode)
-
   (setq c-default-style "bsd"
         c-basic-offset 4)
 
-  (rtags-start-process-unless-running)
+  ;;(rtags-start-process-unless-running)
+  (setq rtags-socket-file "/home/dss/dev/rtags.sock")
+  ;;(setq rtags-tramp-enabled t)
+  (setq tramp-default-method "ssh")
+  (rtags-diagnostics)
 
   (setq auto-save-timeout 2)
 
   (add-hook 'evil-insert-state-exit-hook 'my-save-if-bufferfilename)
-  )
+
+  (add-hook 'c-mode-hook 'my-flycheck-rtags-setup)
+  (add-hook 'c++-mode-hook 'my-flycheck-rtags-setup)
+  (add-hook 'objc-mode-hook 'my-flycheck-rtags-setup)
+  (setq rtags-autostart-diagnostics t)
+  (setq rtags-display-result-backend 'helm)
+
+  (define-key evil-normal-state-map (kbd "RET") 'rtags-select-other-window)
+  (define-key evil-normal-state-map (kbd "M-RET") 'rtags-select)
+  (define-key evil-normal-state-map (kbd "q") 'rtags-bury-or-delete)
+
+
+)
 
 ;; Do not write anything past this comment. This is where Emacs will
 ;; auto-generate custom variable definitions.
@@ -367,22 +405,23 @@ you should place your code here."
  ;; If there is more than one, they won't work right.
  '(custom-safe-themes
    (quote
-    ("fa2b58bb98b62c3b8cf3b6f02f058ef7827a8e497125de0254f56e373abee088" default)))
+    ("fee4e306d9070a55dce4d8e9d92d28bd9efe92625d2ba9d4d654fc9cd8113b7f" "4a91a64af7ff1182ed04f7453bb5a4b0c3d82148d27db699df89a5f1d449e2a4" "1263771faf6967879c3ab8b577c6c31020222ac6d3bac31f331a74275385a452" "5b8eccff13d79fc9b26c544ee20e1b0c499587d6c4bfc38cabe34beaf2c2fc77" "760ce657e710a77bcf6df51d97e51aae2ee7db1fba21bbad07aab0fa0f42f834" "85e6bb2425cbfeed2f2b367246ad11a62fb0f6d525c157038a0d0eaaabc1bfee" "4bf5c18667c48f2979ead0f0bdaaa12c2b52014a6abaa38558a207a65caeb8ad" "3de3f36a398d2c8a4796360bfce1fa515292e9f76b655bb9a377289a6a80a132" "c968804189e0fc963c641f5c9ad64bca431d41af2fb7e1d01a2a6666376f819c" "16dd114a84d0aeccc5ad6fd64752a11ea2e841e3853234f19dc02a7b91f5d661" "3380a2766cf0590d50d6366c5a91e976bdc3c413df963a0ab9952314b4577299" "fa2b58bb98b62c3b8cf3b6f02f058ef7827a8e497125de0254f56e373abee088" default)))
  '(delete-selection-mode nil)
  '(evil-want-Y-yank-to-eol nil)
+ '(helm-ag-base-command "rg --no-heading")
  '(package-selected-packages
    (quote
-    (yaml-mode helm-rtags flycheck-rtags company-rtags ac-rtags winum rtags fuzzy cmake-ide levenshtein insert-shebang glsl-mode fish-mode company-shell company-auctex auctex web-beautify vagrant-tramp vagrant livid-mode skewer-mode simple-httpd json-mode json-snatcher json-reformat js2-refactor multiple-cursors js2-mode js-doc company-tern dash-functional tern coffee-mode company-quickhelp yapfify pyvenv pytest pyenv-mode py-isort pip-requirements live-py-mode hy-mode helm-pydoc cython-mode company-anaconda anaconda-mode pythonic smeargle rainbow-mode rainbow-identifiers orgit org mmm-mode markdown-toc markdown-mode magit-gitflow helm-gitignore gitignore-mode gitconfig-mode gitattributes-mode git-timemachine git-messenger git-link git-gutter-fringe+ git-gutter-fringe fringe-helper git-gutter+ git-gutter gh-md evil-magit magit magit-popup git-commit with-editor diff-hl color-identifiers-mode disaster company-c-headers cmake-mode clang-format evil-unimpaired stickyfunc-enhance srefactor helm-company helm-c-yasnippet flycheck-ycmd flycheck-pos-tip pos-tip flycheck company-ycmd ycmd request-deferred deferred company-statistics company auto-yasnippet yasnippet ac-ispell auto-complete ws-butler window-numbering which-key volatile-highlights vi-tilde-fringe uuidgen use-package toc-org spaceline powerline restart-emacs request rainbow-delimiters popwin persp-mode pcre2el paradox spinner org-plus-contrib org-bullets open-junk-file neotree move-text macrostep lorem-ipsum linum-relative link-hint info+ indent-guide ido-vertical-mode hydra hungry-delete hl-todo highlight-parentheses highlight-numbers parent-mode highlight-indentation hide-comnt help-fns+ helm-themes helm-swoop helm-projectile helm-mode-manager helm-make projectile pkg-info epl helm-flx helm-descbinds helm-ag google-translate golden-ratio flx-ido flx fill-column-indicator fancy-battery eyebrowse expand-region exec-path-from-shell evil-visualstar evil-visual-mark-mode evil-tutor evil-surround evil-search-highlight-persist evil-numbers evil-nerd-commenter evil-mc evil-matchit evil-lisp-state smartparens evil-indent-plus evil-iedit-state iedit evil-exchange evil-escape evil-ediff evil-args evil-anzu anzu evil goto-chg undo-tree eval-sexp-fu highlight elisp-slime-nav dumb-jump f s diminish define-word column-enforce-mode clean-aindent-mode bind-map bind-key auto-highlight-symbol auto-compile packed dash aggressive-indent adaptive-wrap ace-window ace-link ace-jump-helm-line helm avy helm-core popup async quelpa package-build spacemacs-theme)))
+    (let-alist yaml-mode helm-rtags flycheck-rtags company-rtags ac-rtags winum rtags fuzzy cmake-ide levenshtein insert-shebang glsl-mode fish-mode company-shell company-auctex auctex web-beautify vagrant-tramp vagrant livid-mode skewer-mode simple-httpd json-mode json-snatcher json-reformat js2-refactor multiple-cursors js2-mode js-doc company-tern dash-functional tern coffee-mode company-quickhelp yapfify pyvenv pytest pyenv-mode py-isort pip-requirements live-py-mode hy-mode helm-pydoc cython-mode company-anaconda anaconda-mode pythonic smeargle rainbow-mode rainbow-identifiers orgit org mmm-mode markdown-toc markdown-mode magit-gitflow helm-gitignore gitignore-mode gitconfig-mode gitattributes-mode git-timemachine git-messenger git-link git-gutter-fringe+ git-gutter-fringe fringe-helper git-gutter+ git-gutter gh-md evil-magit magit magit-popup git-commit with-editor diff-hl color-identifiers-mode disaster company-c-headers cmake-mode clang-format evil-unimpaired stickyfunc-enhance srefactor helm-company helm-c-yasnippet flycheck-ycmd flycheck-pos-tip pos-tip flycheck company-ycmd ycmd request-deferred deferred company-statistics company auto-yasnippet yasnippet ac-ispell auto-complete ws-butler window-numbering which-key volatile-highlights vi-tilde-fringe uuidgen use-package toc-org spaceline powerline restart-emacs request rainbow-delimiters popwin persp-mode pcre2el paradox spinner org-plus-contrib org-bullets open-junk-file neotree move-text macrostep lorem-ipsum linum-relative link-hint info+ indent-guide ido-vertical-mode hydra hungry-delete hl-todo highlight-parentheses highlight-numbers parent-mode highlight-indentation hide-comnt help-fns+ helm-themes helm-swoop helm-projectile helm-mode-manager helm-make projectile pkg-info epl helm-flx helm-descbinds helm-ag google-translate golden-ratio flx-ido flx fill-column-indicator fancy-battery eyebrowse expand-region exec-path-from-shell evil-visualstar evil-visual-mark-mode evil-tutor evil-surround evil-search-highlight-persist evil-numbers evil-nerd-commenter evil-mc evil-matchit evil-lisp-state smartparens evil-indent-plus evil-iedit-state iedit evil-exchange evil-escape evil-ediff evil-args evil-anzu anzu evil goto-chg undo-tree eval-sexp-fu highlight elisp-slime-nav dumb-jump f s diminish define-word column-enforce-mode clean-aindent-mode bind-map bind-key auto-highlight-symbol auto-compile packed dash aggressive-indent adaptive-wrap ace-window ace-link ace-jump-helm-line helm avy helm-core popup async quelpa package-build spacemacs-theme)))
+ '(rtags-autostart-diagnostics t)
  '(safe-local-variable-values
    (quote
-    ((projectile-project-compilation-cmd . "~/dev/SMS-box/ssh_compile_smm.sh")
+    ((projectile-project-compilation-cmd . "~/dev/smmrepos/compile.sh")
+     (projectile-project-compilation-cmd . "~/dev/SMS-box/ssh_compile_smm.sh")
      (projectile-project-compilation-cmd . "~/dev/SMS-box-kvm/ssh_compile_smm.sh")))))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
- '(company-tooltip-common ((t (:inherit company-tooltip :weight bold
-                                        :underline nil))))
- '(company-tooltip-common-selection ((t (:inherit company-tooltip-selection :weight bold
-                                                  :underline nil)))))
+ '(company-tooltip-common ((t (:inherit company-tooltip :weight bold :underline nil))))
+ '(company-tooltip-common-selection ((t (:inherit company-tooltip-selection :weight bold :underline nil)))))
