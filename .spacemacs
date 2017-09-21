@@ -140,15 +140,16 @@ values."
    ;; List of themes, the first of the list is loaded when spacemacs starts.
    ;; Press <SPC> T n to cycle to the next theme in the list (works great
    ;; with 2 themes variants, one dark and one light)
-   dotspacemacs-themes '(spacemacs-dark
+   dotspacemacs-themes '(base16-monokai
+                         spacemacs-dark
                          base16-eighties
                          spacemacs-light)
    ;; If non nil the cursor color matches the state color in GUI Emacs.
    dotspacemacs-colorize-cursor-according-to-state t
    ;; Default font, or prioritized list of fonts. `powerline-scale' allows to
    ;; quickly tweak the mode-line size to make separators look not too crappy.
-   dotspacemacs-default-font '("Source Code Pro"
-                               :size 11
+   dotspacemacs-default-font '("Input"
+                               :size 12
                                :weight normal
                                :width normal
                                :powerline-scale 1.1)
@@ -200,15 +201,16 @@ values."
    dotspacemacs-large-file-size 1
    ;; Location where to auto-save files. Possible values are `original' to
    ;; auto-save the file in-place, `cache' to auto-save the file to another
-   ;; file stored in the cache directory and `nil' to
+   ;; file stored in the cache directory and `nil' to disable auto-saving.
    ;; (default 'cache)
    dotspacemacs-auto-save-file-location 'original
    ;; Maximum number of rollback slots to keep in the cache. (default 5)
    dotspacemacs-max-rollback-slots 5
    ;; If non nil, `helm' will try to minimize the space it uses. (default nil)
-   dotspacemacs-helm-resize nil
+   dotspacemacs-helm-resize t
    ;; if non nil, the helm header is hidden when there is only one source.
    ;; (default nil)
+   dotspacemacs-helm-no-header nil
    ;; define the position to display `helm', options are `bottom', `top',
    ;; `left', or `right'. (default 'bottom)
    dotspacemacs-helm-position 'bottom
@@ -260,8 +262,18 @@ values."
    ;; scrolling overrides the default behavior of Emacs which recenters point
    ;; when it reaches the top or bottom of the screen. (default t)
    dotspacemacs-smooth-scrolling t
-   ;; If non nil line numbers are turned on in all `prog-mode' and `text-mode'
-   ;; derivatives. If set to `relative', also turns on relative line numbers.
+   ;; Control line numbers activation.
+   ;; If set to `t' or `relative' line numbers are turned on in all `prog-mode' and
+   ;; `text-mode' derivatives. If set to `relative', line numbers are relative.
+   ;; This variable can also be set to a property list for finer control:
+   ;; '(:relative nil
+   ;;   :disabled-for-modes dired-mode
+   ;;                       doc-view-mode
+   ;;                       markdown-mode
+   ;;                       org-mode
+   ;;                       pdf-view-mode
+   ;;                       text-mode
+   ;;   :size-limit-kb 1000)
    ;; (default nil)
    dotspacemacs-line-numbers 'relative
    ;; Code folding method. Possible values are `evil' and `origami'.
@@ -379,7 +391,7 @@ you should place your code here."
   (setq tramp-default-method "ssh")
   (rtags-diagnostics)
 
-  (setq auto-save-timeout 2)
+  (setq auto-save-timeout 1)
 
   (add-hook 'evil-insert-state-exit-hook 'my-save-if-bufferfilename)
 
@@ -391,9 +403,12 @@ you should place your code here."
 
   (define-key evil-normal-state-map (kbd "RET") 'rtags-select-other-window)
   (define-key evil-normal-state-map (kbd "M-RET") 'rtags-select)
-  (define-key evil-normal-state-map (kbd "q") 'rtags-bury-or-delete)
+  ;;(define-key evil-normal-state-map (kbd "q") 'rtags-bury-or-delete)
 
-
+  (spacemacs/toggle-indent-guide-globally-on)
+  (spacemacs/toggle-camel-case-motion-globally-on)
+  (spacemacs/toggle-highlight-long-lines-globally-on)
+  (spacemacs/toggle-golden-ratio-on)
 )
 
 ;; Do not write anything past this comment. This is where Emacs will
