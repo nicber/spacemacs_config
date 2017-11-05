@@ -5,6 +5,9 @@ import argparse
 import os
 import re
 
+flags = {}
+
+include_dirs_regex = re.compile(r'(-I|-isystem)(\s*/usr/local/[\w|/]*)')
 
 def load_compile_commands(build_dir):
     compile_commands_path = os.path.join(build_dir, 'compile_commands.json')
@@ -32,16 +35,16 @@ def load_cmakecache(build_dir):
         exit(1)
 
 
-def replace_include_flags(compile_command, sysroot):
-    compile_command = re.sub(r'-I\s*/usr', r'-I{}/usr'.format(sysroot),
-                             compile_command)
-    compile_command = re.sub(
-        r'-isystem\s*/usr', r'-isystem{}/usr'.format(sysroot), compile_command)
-    compile_command = re.sub(r'-I\s*/home/dss/build', r'-I{}/home/dss/build'.format(sysroot),
-                             compile_command)
-    compile_command = re.sub(
-        r'-isystem\s*/home/dss/build', r'-isystem{}/home/dss/build'.format(sysroot), compile_command)
-    return compile_command
+def replace_include_flags(compile_command, flags, sysroot):
+    def replace(match):
+        try:
+            return "{} {}".format(match.group(0), flags[match.group(1)])
+        except KeyError as e:
+            print (e)
+            return " ".join(match.groups())
+
+    compile_command = include_dirs_regex.sub(replace, compile_command)
+    return '{} --sysroot {}'.format(compile_command, sysroot)
 
 
 def fix_compile_commands(compile_commands_content, sysroot):
