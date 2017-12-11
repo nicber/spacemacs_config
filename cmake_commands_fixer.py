@@ -6,8 +6,8 @@ import os
 import re
 
 flags = {}
+include_dirs_regex = re.compile(r'(-I|-isystem)\s*([\w|/|\.|-]*)')
 
-include_dirs_regex = re.compile(r'(-I|-isystem)(\s*/usr/local/[\w|/]*)')
 
 def load_compile_commands(build_dir):
     compile_commands_path = os.path.join(build_dir, 'compile_commands.json')
@@ -35,23 +35,38 @@ def load_cmakecache(build_dir):
         exit(1)
 
 
-def replace_include_flags(compile_command, flags, sysroot):
+def replace_include_flags(compile_command, sysroot):
     def replace(match):
-        try:
-            return "{} {}".format(match.group(0), flags[match.group(1)])
-        except KeyError as e:
-            print (e)
-            return " ".join(match.groups())
+        include_type = match.group(1)
+        path = match.group(2)
+        if (path.startswith("/home/dss/dev")):
+            return "{} {}".format(include_type, path)
+        if (path.startswith('/usr/local/') and path != "/usr/local/include"):
+            name = path.split("/usr/local/")[1]
+            name = name.split("-")[0]
+            correct_paths = flags[name]
+            if (not isinstance(correct_paths, list)):
+                correct_paths = [correct_paths]
+            final_flags = []
+            for correct_path in correct_paths:
+                if (correct_path is None):
+                    final_flags.append(
+                        "{} {}/{}".format(include_type, sysroot, path))
+                final_flags.append("{} {}".format(include_type, correct_path))
+            return " ".join(final_flags)
+        return "{} {}/{}".format(include_type, sysroot, path)
 
     compile_command = include_dirs_regex.sub(replace, compile_command)
-    return '{} --sysroot {}'.format(compile_command, sysroot)
+    return '{} --sysroot {} --gcc-toolchain={}/usr'.format(
+        compile_command, sysroot, sysroot)
 
 
 def fix_compile_commands(compile_commands_content, sysroot):
     for trans_unit in compile_commands_content:
         # trans_unit['command'] = "{} --sysroot {}".format(
-            # replace_include_flags(trans_unit['command'], sysroot), sysroot)
-        trans_unit['command'] = replace_include_flags(trans_unit['command'], sysroot)
+        # replace_include_flags(trans_unit['command'], sysroot), sysroot)
+        trans_unit['command'] = replace_include_flags(trans_unit['command'],
+                                                      sysroot)
 
 
 def find_source_dir(cmakecache_content):
@@ -97,6 +112,7 @@ def main():
     except Exception as error:
         print('error when saving to {}: {}'.format(destination), error.message)
         exit(1)
+    print(source_dir)
     exit(0)
 
 

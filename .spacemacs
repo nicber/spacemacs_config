@@ -36,11 +36,12 @@ This function should only modify configuration layer settings."
      shell-scripts
      javascript
      vagrant
-     python
+     (python :variables python-test-runner 'pytest)
      (c-c++ :variables c-c++-default-mode-for-headers 'c++-mode)
      (auto-completion :variables auto-completion-complete-with-key-sequence "jk"
                       auto-completion-enable-help-tooltip t)
      syntax-checking
+     semantic
      ycmd
      (colors :variables colors-colorize-identifiers 'variables)
      ;; ----------------------------------------------------------------
@@ -152,7 +153,7 @@ It should only modify the values of Spacemacs settings."
    ;; Default font, or prioritized list of fonts. `powerline-scale' allows to
    ;; quickly tweak the mode-line size to make separators look not too crappy.
    dotspacemacs-default-font '("Input"
-                               :size 14
+                               :size 13
                                :weight normal
                                :width normal
                                :powerline-scale 1.1)
@@ -355,14 +356,19 @@ This function is called immediately after `dotspacemacs/init', before layer
 configuration.
 It is mostly for variables that should be set before packages are loaded.
 If you are unsure, try setting them in `dotspacemacs/user-config' first."
+  (setq configuration-layer-elpa-archives
+        '(("melpa"    . "melpa.org/packages/")
+          ("org"      . "orgmode.org/elpa/")
+          ("gnu"      . "elpa.gnu.org/packages/")))
   (if (not (eq system-type 'gnu/linux))
       (setq ycmd-server-command '("C:/Python27/python.exe" "-u" "c:/Users/nicol/Code/Downloaded/YouCompleteMe/third_party/ycmd/ycmd"))
     (setq ycmd-server-command (list "python" (file-truename "~/.vim/bundle/YouCompleteMe/third_party/ycmd/ycmd")))
     (setq ycmd-extra-conf-whitelist '("c:/Users/nicol/Code/Downloaded/*"))
     (setq ycmd-startup-timeout 10)
-    (setq ycmd-global-config (file-truename "~/dev/SMM/.ycm_extra_conf.py"))
+    (setq ycmd-global-config (file-truename "~/dev/smsrepos/.ycm_extra_conf.py"))
     )
-  )
+  (setq ycmd-global-config (file-truename "~/dev/smsrepos/.ycm_extra_conf.py"))
+)
 
 (defun my-save-if-bufferfilename ()
   (if (buffer-file-name)
@@ -395,6 +401,12 @@ If you are unsure, try setting them in `dotspacemacs/user-config' first."
     "RI" 'rtags-imenu "RT" 'rtags-taglist "Rh"
     'rtags-print-class-hierarchy "Ra" 'rtags-print-source-arguments))
 
+(defun setup-variable-fonts ()
+  (add-hook 'prog-mode-hook
+            (lambda ()
+              (set-face-font 'variable-pitch "-FBI -InputSans-normal-normal-condensed-*-*-*-*-*-*-0-iso10646-1")
+              (variable-pitch-mode t))))
+
 (defun dotspacemacs/user-config ()
   "Configuration for user code:
 This function is called at the very end of Spacemacs startup, after layer
@@ -411,7 +423,6 @@ before packages are loaded."
   (define-key evil-normal-state-map "H" 'evil-backward-arg)
   (define-key evil-motion-state-map "L" 'evil-forward-arg)
   (define-key evil-motion-state-map "H" 'evil-backward-arg)
-
   ;; bind evil-jump-out-args
   (define-key evil-normal-state-map "K" 'evil-jump-out-args)
 
@@ -421,13 +432,14 @@ before packages are loaded."
   (setq c-default-style "bsd"
         c-basic-offset 4)
 
-  ;;(rtags-start-process-unless-running)
-  (setq rtags-socket-file "/home/dss/dev/rtags.sock")
+  ;; (rtags-start-process-unless-running)
+  ;; (setq rtags-socket-file "/home/dss/dev/rtags.sock")
   ;;(setq rtags-tramp-enabled t)
   (setq tramp-default-method "ssh")
   (rtags-diagnostics)
 
-  (setq auto-save-timeout 1)
+  ;; (setq auto-save-timeout 1)
+  (setq ycmd-force-semantic-completion t)
 
   (add-hook 'evil-insert-state-exit-hook 'my-save-if-bufferfilename)
 
@@ -441,70 +453,12 @@ before packages are loaded."
   (define-key evil-normal-state-map (kbd "M-RET") 'rtags-select)
   ;;(define-key evil-normal-state-map (kbd "q") 'rtags-bury-or-delete)
 
-  (spacemacs/toggle-indent-guide-globally-on)
+  ;; (spacemacs/toggle-indent-guide-globally-on)
   (spacemacs/toggle-camel-case-motion-globally-on)
   (spacemacs/toggle-highlight-long-lines-globally-on)
   ;; (spacemacs/toggle-golden-ratio-on)
-)
 
-;; Do not write anything past this comment. This is where Emacs will
-;; auto-generate custom variable definitions.
-(custom-set-variables
- ;; custom-set-variables was added by Custom.
- ;; If you edit it by hand, you could mess it up, so be careful.
- ;; Your init file should contain only one such instance.
- ;; If there is more than one, they won't work right.
- '(custom-safe-themes
-   (quote
-    ("fee4e306d9070a55dce4d8e9d92d28bd9efe92625d2ba9d4d654fc9cd8113b7f" "4a91a64af7ff1182ed04f7453bb5a4b0c3d82148d27db699df89a5f1d449e2a4" "1263771faf6967879c3ab8b577c6c31020222ac6d3bac31f331a74275385a452" "5b8eccff13d79fc9b26c544ee20e1b0c499587d6c4bfc38cabe34beaf2c2fc77" "760ce657e710a77bcf6df51d97e51aae2ee7db1fba21bbad07aab0fa0f42f834" "85e6bb2425cbfeed2f2b367246ad11a62fb0f6d525c157038a0d0eaaabc1bfee" "4bf5c18667c48f2979ead0f0bdaaa12c2b52014a6abaa38558a207a65caeb8ad" "3de3f36a398d2c8a4796360bfce1fa515292e9f76b655bb9a377289a6a80a132" "c968804189e0fc963c641f5c9ad64bca431d41af2fb7e1d01a2a6666376f819c" "16dd114a84d0aeccc5ad6fd64752a11ea2e841e3853234f19dc02a7b91f5d661" "3380a2766cf0590d50d6366c5a91e976bdc3c413df963a0ab9952314b4577299" "fa2b58bb98b62c3b8cf3b6f02f058ef7827a8e497125de0254f56e373abee088" default)))
- '(delete-selection-mode nil)
- '(evil-want-Y-yank-to-eol nil)
- '(package-selected-packages
-   (quote
-    (let-alist yaml-mode helm-rtags flycheck-rtags company-rtags ac-rtags winum rtags fuzzy cmake-ide levenshtein insert-shebang glsl-mode fish-mode company-shell company-auctex auctex web-beautify vagrant-tramp vagrant livid-mode skewer-mode simple-httpd json-mode json-snatcher json-reformat js2-refactor multiple-cursors js2-mode js-doc company-tern dash-functional tern coffee-mode company-quickhelp yapfify pyvenv pytest pyenv-mode py-isort pip-requirements live-py-mode hy-mode helm-pydoc cython-mode company-anaconda anaconda-mode pythonic smeargle rainbow-mode rainbow-identifiers orgit org mmm-mode markdown-toc markdown-mode magit-gitflow helm-gitignore gitignore-mode gitconfig-mode gitattributes-mode git-timemachine git-messenger git-link git-gutter-fringe+ git-gutter-fringe fringe-helper git-gutter+ git-gutter gh-md evil-magit magit magit-popup git-commit with-editor diff-hl color-identifiers-mode disaster company-c-headers cmake-mode clang-format evil-unimpaired stickyfunc-enhance srefactor helm-company helm-c-yasnippet flycheck-ycmd flycheck-pos-tip pos-tip flycheck company-ycmd ycmd request-deferred deferred company-statistics company auto-yasnippet yasnippet ac-ispell auto-complete ws-butler window-numbering which-key volatile-highlights vi-tilde-fringe uuidgen use-package toc-org spaceline powerline restart-emacs request rainbow-delimiters popwin persp-mode pcre2el paradox spinner org-plus-contrib org-bullets open-junk-file neotree move-text macrostep lorem-ipsum linum-relative link-hint info+ indent-guide ido-vertical-mode hydra hungry-delete hl-todo highlight-parentheses highlight-numbers parent-mode highlight-indentation hide-comnt help-fns+ helm-themes helm-swoop helm-projectile helm-mode-manager helm-make projectile pkg-info epl helm-flx helm-descbinds helm-ag google-translate golden-ratio flx-ido flx fill-column-indicator fancy-battery eyebrowse expand-region exec-path-from-shell evil-visualstar evil-visual-mark-mode evil-tutor evil-surround evil-search-highlight-persist evil-numbers evil-nerd-commenter evil-mc evil-matchit evil-lisp-state smartparens evil-indent-plus evil-iedit-state iedit evil-exchange evil-escape evil-ediff evil-args evil-anzu anzu evil goto-chg undo-tree eval-sexp-fu highlight elisp-slime-nav dumb-jump f s diminish define-word column-enforce-mode clean-aindent-mode bind-map bind-key auto-highlight-symbol auto-compile packed dash aggressive-indent adaptive-wrap ace-window ace-link ace-jump-helm-line helm avy helm-core popup async quelpa package-build spacemacs-theme)))
- '(rtags-autostart-diagnostics t)
- '(safe-local-variable-values
-   (quote
-    ((projectile-project-compilation-cmd . "~/dev/smmrepos/compile.sh")
-     (projectile-project-compilation-cmd . "~/dev/SMS-box/ssh_compile_smm.sh")
-     (projectile-project-compilation-cmd . "~/dev/SMS-box-kvm/ssh_compile_smm.sh")))))
-(custom-set-faces
- ;; custom-set-faces was added by Custom.
- ;; If you edit it by hand, you could mess it up, so be careful.
- ;; Your init file should contain only one such instance.
- ;; If there is more than one, they won't work right.
- '(company-tooltip-common ((t (:inherit company-tooltip :weight bold :underline nil))))
- '(company-tooltip-common-selection ((t (:inherit company-tooltip-selection :weight bold :underline nil)))))
-(defun dotspacemacs/emacs-custom-settings ()
-  "Emacs custom settings.
-This is an auto-generated function, do not modify its content directly, use
-Emacs customize menu instead.
-This function is called at the very end of Spacemacs initialization."
-(custom-set-variables
- ;; custom-set-variables was added by Custom.
- ;; If you edit it by hand, you could mess it up, so be careful.
- ;; Your init file should contain only one such instance.
- ;; If there is more than one, they won't work right.
- '(custom-safe-themes
-   (quote
-    ("fee4e306d9070a55dce4d8e9d92d28bd9efe92625d2ba9d4d654fc9cd8113b7f" "4a91a64af7ff1182ed04f7453bb5a4b0c3d82148d27db699df89a5f1d449e2a4" "1263771faf6967879c3ab8b577c6c31020222ac6d3bac31f331a74275385a452" "5b8eccff13d79fc9b26c544ee20e1b0c499587d6c4bfc38cabe34beaf2c2fc77" "760ce657e710a77bcf6df51d97e51aae2ee7db1fba21bbad07aab0fa0f42f834" "85e6bb2425cbfeed2f2b367246ad11a62fb0f6d525c157038a0d0eaaabc1bfee" "4bf5c18667c48f2979ead0f0bdaaa12c2b52014a6abaa38558a207a65caeb8ad" "3de3f36a398d2c8a4796360bfce1fa515292e9f76b655bb9a377289a6a80a132" "c968804189e0fc963c641f5c9ad64bca431d41af2fb7e1d01a2a6666376f819c" "16dd114a84d0aeccc5ad6fd64752a11ea2e841e3853234f19dc02a7b91f5d661" "3380a2766cf0590d50d6366c5a91e976bdc3c413df963a0ab9952314b4577299" "fa2b58bb98b62c3b8cf3b6f02f058ef7827a8e497125de0254f56e373abee088" default)))
- '(delete-selection-mode nil)
- '(evil-want-Y-yank-to-eol nil)
- '(helm-ag-base-command "rg --no-heading")
- '(package-selected-packages
-   (quote
-    (base16-theme let-alist yaml-mode helm-rtags flycheck-rtags company-rtags ac-rtags winum rtags fuzzy cmake-ide levenshtein insert-shebang glsl-mode fish-mode company-shell company-auctex auctex web-beautify vagrant-tramp vagrant livid-mode skewer-mode simple-httpd json-mode json-snatcher json-reformat js2-refactor multiple-cursors js2-mode js-doc company-tern dash-functional tern coffee-mode company-quickhelp yapfify pyvenv pytest pyenv-mode py-isort pip-requirements live-py-mode hy-mode helm-pydoc cython-mode company-anaconda anaconda-mode pythonic smeargle rainbow-mode rainbow-identifiers orgit org mmm-mode markdown-toc markdown-mode magit-gitflow helm-gitignore gitignore-mode gitconfig-mode gitattributes-mode git-timemachine git-messenger git-link git-gutter-fringe+ git-gutter-fringe fringe-helper git-gutter+ git-gutter gh-md evil-magit magit magit-popup git-commit with-editor diff-hl color-identifiers-mode disaster company-c-headers cmake-mode clang-format evil-unimpaired stickyfunc-enhance srefactor helm-company helm-c-yasnippet flycheck-ycmd flycheck-pos-tip pos-tip flycheck company-ycmd ycmd request-deferred deferred company-statistics company auto-yasnippet yasnippet ac-ispell auto-complete ws-butler window-numbering which-key volatile-highlights vi-tilde-fringe uuidgen use-package toc-org spaceline powerline restart-emacs request rainbow-delimiters popwin persp-mode pcre2el paradox spinner org-plus-contrib org-bullets open-junk-file neotree move-text macrostep lorem-ipsum linum-relative link-hint info+ indent-guide ido-vertical-mode hydra hungry-delete hl-todo highlight-parentheses highlight-numbers parent-mode highlight-indentation hide-comnt help-fns+ helm-themes helm-swoop helm-projectile helm-mode-manager helm-make projectile pkg-info epl helm-flx helm-descbinds helm-ag google-translate golden-ratio flx-ido flx fill-column-indicator fancy-battery eyebrowse expand-region exec-path-from-shell evil-visualstar evil-visual-mark-mode evil-tutor evil-surround evil-search-highlight-persist evil-numbers evil-nerd-commenter evil-mc evil-matchit evil-lisp-state smartparens evil-indent-plus evil-iedit-state iedit evil-exchange evil-escape evil-ediff evil-args evil-anzu anzu evil goto-chg undo-tree eval-sexp-fu highlight elisp-slime-nav dumb-jump f s diminish define-word column-enforce-mode clean-aindent-mode bind-map bind-key auto-highlight-symbol auto-compile packed dash aggressive-indent adaptive-wrap ace-window ace-link ace-jump-helm-line helm avy helm-core popup async quelpa package-build spacemacs-theme)))
- '(rtags-autostart-diagnostics t)
- '(safe-local-variable-values
-   (quote
-    ((projectile-project-compilation-cmd . "~/dev/smmrepos/compile.sh")
-     (projectile-project-compilation-cmd . "~/dev/SMS-box/ssh_compile_smm.sh")
-     (projectile-project-compilation-cmd . "~/dev/SMS-box-kvm/ssh_compile_smm.sh")))))
-(custom-set-faces
- ;; custom-set-faces was added by Custom.
- ;; If you edit it by hand, you could mess it up, so be careful.
- ;; Your init file should contain only one such instance.
- ;; If there is more than one, they won't work right.
- '(company-tooltip-common ((t (:inherit company-tooltip :weight bold :underline nil))))
- '(company-tooltip-common-selection ((t (:inherit company-tooltip-selection :weight bold :underline nil)))))
+  (setq magit-revision-show-gravatars nil)
+
+  (setup-variable-fonts)
 )
