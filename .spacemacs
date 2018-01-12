@@ -26,19 +26,17 @@ This function should only modify configuration layer settings."
    ;; If non-nil layers with lazy install support are lazy installed.
    ;; List of additional paths where to look for configuration layers.
    ;; Paths must have a trailing slash (i.e. `~/.mycontribs/')
-   dotspacemacs-configuration-layer-path '("~/.config/spacemacs_config/layers/")
+   dotspacemacs-configuration-layer-path nil ;;'("~/.config/spacemacs_config/layers/")
    ;; List of configuration layers to load.
    dotspacemacs-configuration-layers
    '(
      yaml
-     rtags
      (latex :variables latex-enable-auto-fill t)
      shell-scripts
      javascript
      vagrant
      (python :variables python-test-runner 'pytest)
-     (c-c++ :variables c-c++-default-mode-for-headers 'c++-mode
-            c-c++-enable-clang-support t)
+     (c-c++ :variables c-c++-default-mode-for-headers 'c++-mode c-c++-enable-clang-support t c-c++-enable-rtags-support t)
      (auto-completion :variables auto-completion-complete-with-key-sequence "jk"
                       auto-completion-enable-help-tooltip t)
      syntax-checking
@@ -368,7 +366,7 @@ If you are unsure, try setting them in `dotspacemacs/user-config' first."
     (setq ycmd-startup-timeout 10)
     (setq ycmd-global-config (file-truename "~/dev/smsrepos/.ycm_extra_conf.py"))
     )
-  (setq ycmd-global-config (file-truename "~/dev/smsrepos/.ycm_extra_conf.py"))
+  (setq ycmd-global-config nil)
 )
 
 (defun my-save-if-bufferfilename ()
@@ -382,25 +380,6 @@ If you are unsure, try setting them in `dotspacemacs/user-config' first."
   (setq-local flycheck-highlighting-mode nil) ;; RTags creates more accurate overlays.
   (setq-local flycheck-check-syntax-automatically nil)
   )
-
-(defun rtags-major-mode-keybindings (mode)
-  (spacemacs/set-leader-keys-for-major-mode
-    mode "R." 'rtags-find-symbol-at-point "R,"
-    'rtags-find-references-at-point "Rv" 'rtags-find-virtuals-at-point
-    "RV" 'rtags-print-enum-value-at-point "R/"
-    'rtags-find-all-references-at-point "RY" 'rtags-cycle-overlays-on-screen
-    "R>" 'rtags-find-symbol "R<" 'rtags-find-references
-    "R[" 'rtags-location-stack-back "R]" 'rtags-location-stack-forward
-    "RD" 'rtags-diagnostics "RG" 'rtags-guess-function-at-point
-    "Rp" 'rtags-set-current-project "RP" 'rtags-print-dependencies
-    "Re" 'rtags-reparse-file "RE" 'rtags-preprocess-file
-    "RR" 'rtags-rename-symbol "RM" 'rtags-symbol-info
-    "RS" 'rtags-display-summary "RO" 'rtags-goto-offset
-    "R;" 'rtags-find-file "RF" 'rtags-fixit "RL"
-    'rtags-copy-and-print-current-location "RX"
-    'rtags-fix-fixit-at-point "RB" 'rtags-show-rtags-buffer
-    "RI" 'rtags-imenu "RT" 'rtags-taglist "Rh"
-    'rtags-print-class-hierarchy "Ra" 'rtags-print-source-arguments))
 
 (defun setup-variable-fonts ()
   (add-hook 'prog-mode-hook
