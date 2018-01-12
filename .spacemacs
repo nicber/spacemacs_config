@@ -37,7 +37,8 @@ This function should only modify configuration layer settings."
      javascript
      vagrant
      (python :variables python-test-runner 'pytest)
-     (c-c++ :variables c-c++-default-mode-for-headers 'c++-mode)
+     (c-c++ :variables c-c++-default-mode-for-headers 'c++-mode
+            c-c++-enable-clang-support t)
      (auto-completion :variables auto-completion-complete-with-key-sequence "jk"
                       auto-completion-enable-help-tooltip t)
      syntax-checking
@@ -55,7 +56,7 @@ This function should only modify configuration layer settings."
      emacs-lisp
      git
      markdown
-     neotree
+     treemacs
      ;; org
      ;; (shell :variables
      ;;        shell-default-height 30
@@ -155,8 +156,8 @@ It should only modify the values of Spacemacs settings."
    dotspacemacs-default-font '("Input"
                                :size 13
                                :weight normal
-                               :width normal
-                               :powerline-scale 1.1)
+                               :width normal)
+                               ;; :powerline-scale 1)
    ;; The leader key (default "SPC")
    dotspacemacs-leader-key "SPC"
    ;; The key used for Emacs commands `M-x' (after pressing on the leader key).
