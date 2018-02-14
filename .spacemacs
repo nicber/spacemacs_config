@@ -56,12 +56,13 @@ This function should only modify configuration layer settings."
      markdown
      treemacs
      ;; org
-     ;; (shell :variables
-     ;;        shell-default-height 30
-     ;;        shell-default-position 'bottom)
+      (shell :variables
+            shell-default-height 30
+            shell-default-position 'bottom)
      ;; spell-checking
      ;; syntax-checking
      ;; version-control
+     ipython-notebook
      )
    ;; List of additional packages that will be installed without being
    ;; wrapped in a layer. If you need some configuration for these
@@ -415,7 +416,6 @@ before packages are loaded."
   ;; (rtags-start-process-unless-running)
   ;; (setq rtags-socket-file "/home/dss/dev/rtags.sock")
   ;;(setq rtags-tramp-enabled t)
-  (setq tramp-default-method "ssh")
   (rtags-diagnostics)
 
   ;; (setq auto-save-timeout 1)
@@ -441,4 +441,32 @@ before packages are loaded."
   (setq magit-revision-show-gravatars nil)
 
   (setup-variable-fonts)
+
+  (add-hook 'doc-view-mode-hook 'auto-revert-mode)
+)
+(defun dotspacemacs/emacs-custom-settings ()
+  "Emacs custom settings.
+This is an auto-generated function, do not modify its content directly, use
+Emacs customize menu instead.
+This function is called at the very end of Spacemacs initialization."
+(custom-set-variables
+ ;; custom-set-variables was added by Custom.
+ ;; If you edit it by hand, you could mess it up, so be careful.
+ ;; Your init file should contain only one such instance.
+ ;; If there is more than one, they won't work right.
+ '(TeX-engine (quote xetex))
+ '(ansi-term-color-vector
+   [unspecified "#272822" "#f92672" "#a6e22e" "#f4bf75" "#66d9ef" "#ae81ff" "#66d9ef" "#f8f8f2"] t)
+ '(delete-selection-mode nil)
+ '(ein:worksheet-enable-undo t)
+ '(evil-want-Y-yank-to-eol nil)
+ '(package-selected-packages
+   (quote
+    (xterm-color shell-pop ob-ipython multi-term eshell-z eshell-prompt-extras esh-help ein websocket yasnippet-snippets yapfify yaml-mode ws-butler winum which-key web-beautify volatile-highlights vi-tilde-fringe vagrant-tramp vagrant uuidgen use-package treemacs-projectile treemacs-evil toc-org symon string-inflection stickyfunc-enhance srefactor spaceline-all-the-icons smeargle restart-emacs realgud rainbow-mode rainbow-identifiers rainbow-delimiters pyvenv pytest pyenv-mode py-isort popwin pippel pip-requirements persp-mode pcre2el password-generator paradox overseer org-plus-contrib org-bullets open-junk-file nameless move-text mmm-mode markdown-toc magit-gitflow macrostep lorem-ipsum livid-mode live-py-mode linum-relative link-hint json-mode js2-refactor js-doc insert-shebang indent-guide importmagic hy-mode hungry-delete hl-todo highlight-parentheses highlight-numbers highlight-indentation helm-themes helm-swoop helm-rtags helm-pydoc helm-purpose helm-projectile helm-mode-manager helm-make helm-gitignore helm-flx helm-descbinds helm-company helm-c-yasnippet helm-ag google-translate google-c-style golden-ratio gitconfig-mode gitattributes-mode git-timemachine git-messenger git-link gh-md fuzzy font-lock+ flycheck-rtags flycheck-pos-tip flycheck-bashate flx-ido fish-mode fill-column-indicator fancy-battery eyebrowse expand-region exec-path-from-shell evil-visualstar evil-visual-mark-mode evil-unimpaired evil-tutor evil-surround evil-search-highlight-persist evil-numbers evil-nerd-commenter evil-mc evil-matchit evil-magit evil-lisp-state evil-lion evil-indent-plus evil-iedit-state evil-exchange evil-escape evil-ediff evil-cleverparens evil-args evil-anzu eval-sexp-fu elisp-slime-nav editorconfig dumb-jump disaster diminish define-word cython-mode counsel-projectile company-ycmd company-tern company-statistics company-shell company-rtags company-quickhelp company-c-headers company-auctex company-anaconda column-enforce-mode color-identifiers-mode coffee-mode clean-aindent-mode clang-format centered-cursor-mode base16-theme auto-yasnippet auto-highlight-symbol auto-compile aggressive-indent adaptive-wrap ace-link ace-jump-helm-line ac-ispell))))
+(custom-set-faces
+ ;; custom-set-faces was added by Custom.
+ ;; If you edit it by hand, you could mess it up, so be careful.
+ ;; Your init file should contain only one such instance.
+ ;; If there is more than one, they won't work right.
+ )
 )
