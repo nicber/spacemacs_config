@@ -38,7 +38,9 @@ This function should only modify configuration layer settings."
      (python :variables python-test-runner 'pytest)
      (c-c++ :variables c-c++-default-mode-for-headers 'c++-mode c-c++-enable-clang-support t c-c++-enable-rtags-support t)
      (auto-completion :variables auto-completion-complete-with-key-sequence "jk"
-                      auto-completion-enable-help-tooltip t)
+                      auto-completion-enable-help-tooltip t
+                      ;; auto-completion-enable-snippets-in-popup t
+                      )
      syntax-checking
      semantic
      ycmd
@@ -100,6 +102,10 @@ It should only modify the values of Spacemacs settings."
    ;; Maximum allowed time in seconds to contact an ELPA repository.
    ;; (default 5)
    dotspacemacs-elpa-timeout 5
+   ;; If non-nil then Spacelpa repository is the primary source to install
+   ;; a locked version of packages. If nil then Spacemacs will install the lastest
+   ;; version of packages from MELPA. (default nil)
+   dotspacemacs-use-spacelpa nil
    ;; If non-nil then verify the signature for downloaded Spacelpa archives.
    ;; (default nil)
    dotspacemacs-verify-spacelpa-archives nil
@@ -143,20 +149,26 @@ It should only modify the values of Spacemacs settings."
    ;; List of themes, the first of the list is loaded when spacemacs starts.
    ;; Press `SPC T n' to cycle to the next theme in the list (works great
    ;; with 2 themes variants, one dark and one light)
-   dotspacemacs-themes '(base16-monokai
+   dotspacemacs-themes '(spacemacs-light
+                         base16-monokai
                          spacemacs-dark
-                         base16-eighties
-                         spacemacs-light)
+                         base16-eighties)
+   ;; Set the theme for the Spaceline. Supported themes are `spacemacs',
+   ;; `all-the-icons', `custom', `vim-powerline' and `vanilla'. The first three
+   ;; are spaceline themes. `vanilla' is default Emacs mode-line. `custom' is a
+   ;; user defined themes, refer to the DOCUMENTATION.org for more info on how
+   ;; to create your own spaceline theme.. (default 'spacemacs)
+   dotspacemacs-mode-line-theme 'spacemacs
    ;; If non-nil the cursor color matches the state color in GUI Emacs.
    ;; (default t)
    dotspacemacs-colorize-cursor-according-to-state t
    ;; Default font, or prioritized list of fonts. `powerline-scale' allows to
    ;; quickly tweak the mode-line size to make separators look not too crappy.
-   dotspacemacs-default-font '("Input"
-                               :size 13
+   dotspacemacs-default-font '("Fira Code"
+                               :size 12
                                :weight normal
-                               :width normal)
-                               ;; :powerline-scale 1)
+                               :width normal
+                               :powerline-scale 1.1)
    ;; The leader key (default "SPC")
    dotspacemacs-leader-key "SPC"
    ;; The key used for Emacs commands `M-x' (after pressing on the leader key).
@@ -190,7 +202,7 @@ It should only modify the values of Spacemacs settings."
    dotspacemacs-visual-line-move-text nil
    ;; If non-nil, inverse the meaning of `g' in `:substitute' Evil ex-command.
    ;; (default nil)
-   dotspacemacs-ex-substitute-global nil
+   dotspacemacs-ex-substitute-global t
    ;; Name of the default layout (default "Default")
    dotspacemacs-default-layout-name "Default"
    ;; If non-nil the default layout name is displayed in the mode-line.
@@ -213,9 +225,9 @@ It should only modify the values of Spacemacs settings."
    dotspacemacs-auto-save-file-location 'cache
    ;; Maximum number of rollback slots to keep in the cache. (default 5)
    dotspacemacs-max-rollback-slots 5
-   ;; If non nil, `helm' will try to minimize the space it uses. (default nil)
-   dotspacemacs-helm-resize t
-   ;; if non nil, the helm header is hidden when there is only one source.
+   ;; If non-nil, `helm' will try to minimize the space it uses. (default nil)
+   dotspacemacs-helm-resize nil
+   ;; if non-nil, the helm header is hidden when there is only one source.
    ;; (default nil)
    dotspacemacs-helm-no-header nil
    ;; define the position to display `helm', options are `bottom', `top',
@@ -226,8 +238,9 @@ It should only modify the values of Spacemacs settings."
    ;; source settings. Else, disable fuzzy matching in all sources.
    ;; (default 'always)
    dotspacemacs-helm-use-fuzzy 'always
-   ;; If non nil the paste micro-state is enabled. When enabled pressing `p`
-   ;; several times cycle between the kill ring content. (default nil)
+   ;; If non-nil, the paste transient-state is enabled. While enabled, pressing
+   ;; `p' several times cycles through the elements in the `kill-ring'.
+   ;; (default nil)
    dotspacemacs-enable-paste-transient-state t
    ;; Which-key delay in seconds. The which-key buffer is the popup listing
    ;; the commands bound to the current keystroke sequence. (default 0.4)
@@ -394,6 +407,7 @@ This function is called at the very end of Spacemacs startup, after layer
 configuration.
 Put your configuration code here, except for variables that should be set
 before packages are loaded."
+
   (when (eq system-type 'windows-nt)
     (setq grep-program "c:\\Users\\nicol\\Desktop\\emacs\\bin\\grep.exe")
     (setq find-program "c:\\Users\\nicol\\Desktop\\emacs\\bin\\find.exe"))
@@ -415,7 +429,6 @@ before packages are loaded."
 
   ;; (rtags-start-process-unless-running)
   ;; (setq rtags-socket-file "/home/dss/dev/rtags.sock")
-  ;;(setq rtags-tramp-enabled t)
   (rtags-diagnostics)
 
   ;; (setq auto-save-timeout 1)
@@ -440,10 +453,51 @@ before packages are loaded."
 
   (setq magit-revision-show-gravatars nil)
 
-  (setup-variable-fonts)
+  ;; (setup-variable-fonts)
 
   (add-hook 'doc-view-mode-hook 'auto-revert-mode)
+
+  (defun my-correct-symbol-bounds (pretty-alist)
+      "Prepend a TAB character to each symbol in this alist,
+  this way compose-region called by prettify-symbols-mode
+  will use the correct width of the symbols
+  instead of the width measured by char-width."
+      (mapcar (lambda (el)
+                (setcdr el (string ?\t (cdr el)))
+                el)
+              pretty-alist))
+
+    (defun my-ligature-list (ligatures codepoint-start)
+      "Create an alist of strings to replace with
+  codepoints starting from codepoint-start."
+      (let ((codepoints (-iterate '1+ codepoint-start (length ligatures))))
+        (-zip-pair ligatures codepoints)))
+
+    (setq my-fira-code-ligatures
+          (let* ((ligs '("www" "**" "***" "**/" "*>" "*/" "\\\\" "\\\\\\"
+                         "{-" "[]" "::" ":::" ":=" "!!" "!=" "!==" "-}"
+                         "--" "---" "-->" "->" "->>" "-<" "-<<" "-~"
+                         "#{" "#[" "##" "###" "####" "#(" "#?" "#_" "#_("
+                         ".-" ".=" ".." "..<" "..." "?=" "??" ";;" "/*"
+                         "/**" "/=" "/==" "/>" "//" "///" "&&" "||" "||="
+                         "|=" "|>" "^=" "$>" "++" "+++" "+>" "=:=" "=="
+                         "===" "==>" "=>" "=>>" "<=" "=<<" "=/=" ">-" ">="
+                         ">=>" ">>" ">>-" ">>=" ">>>" "<*" "<*>" "<|" "<|>"
+                         "<$" "<$>" "<!--" "<-" "<--" "<->" "<+" "<+>" "<="
+                         "<==" "<=>" "<=<" "<>" "<<" "<<-" "<<=" "<<<" "<~"
+                         "<~~" "</" "</>" "~@" "~-" "~=" "~>" "~~" "~~>" "%%"
+                         "x" ":" "+" "+" "*")))
+            (my-correct-symbol-bounds (my-ligature-list ligs #Xe100))))
+
+  (defun my-set-fira-code-ligatures ()
+    "Add fira code ligatures for use with prettify-symbols-mode."
+    (setq prettify-symbols-alist
+          (append my-fira-code-ligatures prettify-symbols-alist))
+    (prettify-symbols-mode))
+
+  ;; (add-hook 'prog-mode-hook 'my-set-fira-code-ligatures)
 )
+
 (defun dotspacemacs/emacs-custom-settings ()
   "Emacs custom settings.
 This is an auto-generated function, do not modify its content directly, use
@@ -463,10 +517,32 @@ This function is called at the very end of Spacemacs initialization."
  '(package-selected-packages
    (quote
     (xterm-color shell-pop ob-ipython multi-term eshell-z eshell-prompt-extras esh-help ein websocket yasnippet-snippets yapfify yaml-mode ws-butler winum which-key web-beautify volatile-highlights vi-tilde-fringe vagrant-tramp vagrant uuidgen use-package treemacs-projectile treemacs-evil toc-org symon string-inflection stickyfunc-enhance srefactor spaceline-all-the-icons smeargle restart-emacs realgud rainbow-mode rainbow-identifiers rainbow-delimiters pyvenv pytest pyenv-mode py-isort popwin pippel pip-requirements persp-mode pcre2el password-generator paradox overseer org-plus-contrib org-bullets open-junk-file nameless move-text mmm-mode markdown-toc magit-gitflow macrostep lorem-ipsum livid-mode live-py-mode linum-relative link-hint json-mode js2-refactor js-doc insert-shebang indent-guide importmagic hy-mode hungry-delete hl-todo highlight-parentheses highlight-numbers highlight-indentation helm-themes helm-swoop helm-rtags helm-pydoc helm-purpose helm-projectile helm-mode-manager helm-make helm-gitignore helm-flx helm-descbinds helm-company helm-c-yasnippet helm-ag google-translate google-c-style golden-ratio gitconfig-mode gitattributes-mode git-timemachine git-messenger git-link gh-md fuzzy font-lock+ flycheck-rtags flycheck-pos-tip flycheck-bashate flx-ido fish-mode fill-column-indicator fancy-battery eyebrowse expand-region exec-path-from-shell evil-visualstar evil-visual-mark-mode evil-unimpaired evil-tutor evil-surround evil-search-highlight-persist evil-numbers evil-nerd-commenter evil-mc evil-matchit evil-magit evil-lisp-state evil-lion evil-indent-plus evil-iedit-state evil-exchange evil-escape evil-ediff evil-cleverparens evil-args evil-anzu eval-sexp-fu elisp-slime-nav editorconfig dumb-jump disaster diminish define-word cython-mode counsel-projectile company-ycmd company-tern company-statistics company-shell company-rtags company-quickhelp company-c-headers company-auctex company-anaconda column-enforce-mode color-identifiers-mode coffee-mode clean-aindent-mode clang-format centered-cursor-mode base16-theme auto-yasnippet auto-highlight-symbol auto-compile aggressive-indent adaptive-wrap ace-link ace-jump-helm-line ac-ispell))))
-(custom-set-faces
- ;; custom-set-faces was added by Custom.
- ;; If you edit it by hand, you could mess it up, so be careful.
- ;; Your init file should contain only one such instance.
- ;; If there is more than one, they won't work right.
- )
-)
+ '(rtags-autostart-diagnostics t)
+ '(rtags-completions-enabled t)
+ '(rtags-display-result-backend (quote helm))
+ '(safe-local-variable-values
+   (quote
+    ((cmake-ide-build-dir . "/home/dss/dev/smsrepos/libsmp2/lib/Invap")
+     (cmake-ide-project-dir . "/home/dss/dev/smsrepos/libsmp2/lib/Invap")
+     (cmake-ide-build-dir . "/home/dss/dev/smsrepos/orbit_propagator/lib/liborbit_propagator")
+     (cmake-ide-project-dir . "/home/dss/dev/smsrepos/orbit_propagator/lib/liborbit_propagator")
+     (cmake-ide-build-dir . "/home/dss/dev/smsrepos/librflink")
+     (cmake-ide-project-dir . "/home/dss/dev/smsrepos/librflink")
+     (cmake-ide-build-dir . "/home/dss/dev/smsrepos/smm/lib/libsmm")
+     (cmake-ide-project-dir . "/home/dss/dev/smsrepos/smm/lib/libsmm")
+     (cmake-ide-build-dir . "/home/dss/dev/smsrepos/libdsscommon")
+     (cmake-ide-project-dir . "/home/dss/dev/smsrepos/libdsscommon")
+     (cmake-ide-build-dir . "/home/dss/dev/smsrepos/libsmp2/lib/Mdk")
+     (cmake-ide-project-dir . "/home/dss/dev/smsrepos/libsmp2/lib/Mdk")
+     (cmake-ide-build-dir . "/home/dss/dev/smsrepos/tools/lib/FILE_PROCESSOR")
+     (cmake-ide-project-dir . "/home/dss/dev/smsrepos/tools/lib/FILE_PROCESSOR")
+     (cmake-ide-build-dir . "/home/dss/dev/smsrepos/tools/lib/DATA_STRUCTURES")
+     (cmake-ide-project-dir . "/home/dss/dev/smsrepos/tools/lib/DATA_STRUCTURES")
+     (cmake-ide-build-dir . "/home/dss/dev/smsrepos/syrcos/lib/libsyrcosclient")
+     (cmake-ide-project-dir . "/home/dss/dev/smsrepos/syrcos/lib/libsyrcosclient")
+     (cmake-ide-build-dir . "/home/dss/dev/smsrepos/geosar/lib/libgeosar")
+     (cmake-ide-project-dir . "/home/dss/dev/smsrepos/geosar/lib/libgeosar")
+     (projectile-project-compilation-cmd . "~/dev/smsrepos/compile.sh")))))
+ '(rtags-errline ((t (:foreground "red" :underline "red"))))
+ '(rtags-fixitline ((t (:foreground "brown" :underline "brown" :slant italic))))
+ '(rtags-warnline ((t (:foreground "orange" :underline "orange")))))
